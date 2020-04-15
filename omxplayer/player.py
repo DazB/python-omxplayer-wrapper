@@ -250,7 +250,7 @@ class OMXPlayer(object):
         try:
             self._load_source(source)
             if pause:
-                time.sleep(0.5)  # Wait for the DBus interface to be initialised
+                # time.sleep(0.5)  # Wait for the DBus interface to be initialised. Daz edit: nah fuck that
                 self.pause()
         except:
             # Make sure we do not leave any dangling process
