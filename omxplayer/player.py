@@ -176,7 +176,7 @@ class OMXPlayer(object):
             source = str(source.resolve())
         except AttributeError:
             pass
-        command = ['omxplayer'] + self.args + [source]
+        command = ['../omxplayer/omxplayer'] + self.args + [source] # TODO USING CUSTOM OMX. REMOVE THIS!!!!!!!!!!!!!!!!!!
         if self._dbus_name:
             command += ['--dbus_name', self._dbus_name]
         logger.debug("Opening omxplayer with the command: %s" % command)
@@ -250,7 +250,9 @@ class OMXPlayer(object):
         try:
             self._load_source(source)
             if pause:
-                # time.sleep(0.5)  # Wait for the DBus interface to be initialised. Daz edit: nah fuck that
+                # Daz edit: commented this out because causes first .5 secs of video to be skipped, 
+                # and so far, commenting it out hasn't broken anything
+                # time.sleep(0.5)  # Wait for the DBus interface to be initialised. 
                 self.pause()
         except:
             # Make sure we do not leave any dangling process
@@ -834,6 +836,22 @@ class OMXPlayer(object):
             bool: Whether the player skipped to the previous chapter
         """
         return self._player_interface.Previous()
+
+    ############################ DAZ EDIT HERE ########################################
+    @_check_player_is_active
+    @_from_dbus_type
+    def set_loop(self, set_loop):
+        """
+        Daz edit:
+        Sets the loop variable in omxplayer
+        0 = don't loop
+        Anything else = loop
+        
+        Returns:
+            double: What the loop was set to
+        """
+        return self._player_interface_property('SetLoop', dbus.Double(set_loop))
+    ############################ END ########################################
 
     @property
     def _root_interface(self):
