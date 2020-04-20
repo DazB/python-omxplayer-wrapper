@@ -153,6 +153,8 @@ class OMXPlayer(object):
         self._connection = None
         self.load(source, pause=pause)
 
+        self.is_looping = False
+
     def _load_source(self, source):
         if self._process:
             self.quit()
@@ -843,14 +845,26 @@ class OMXPlayer(object):
     def set_loop(self, set_loop):
         """
         Daz edit:
-        Sets the loop variable in omxplayer
-        0 = don't loop
-        Anything else = loop
-        
+        Sets the loop variable in omxplayer.
+        For some reason, 0 doesn't work with dbus.Double. That caused me a headache.
+
         Returns:
-            double: What the loop was set to
+            boolean: loop current state
         """
-        return self._player_interface_property('SetLoop', dbus.Double(set_loop))
+        NO_LOOP = 1
+        LOOP = 2
+
+        if (set_loop == False):
+            loop_double = NO_LOOP
+        else:
+            loop_double = LOOP
+        loop_status = self._player_interface_property('SetLoop', dbus.Double(loop_double))
+
+        if loop_status == NO_LOOP:
+            self.is_looping = False
+        else:
+            self.is_looping = True
+        return self.is_looping
     ############################ END ########################################
 
     @property
