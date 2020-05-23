@@ -178,7 +178,7 @@ class OMXPlayer(object):
             source = str(source.resolve())
         except AttributeError:
             pass
-        command = ['../omxplayer/omxplayer'] + self.args + [source] # TODO USING CUSTOM OMX. REMOVE THIS!!!!!!!!!!!!!!!!!!
+        command = ['../omxplayer/omxplayer'] + self.args + [source] # TODO Daz edit: USING CUSTOM OMX. REMOVE THIS!!!!!!!!!!!!!!!!!!
         if self._dbus_name:
             command += ['--dbus_name', self._dbus_name]
         logger.debug("Opening omxplayer with the command: %s" % command)
@@ -252,9 +252,7 @@ class OMXPlayer(object):
         try:
             self._load_source(source)
             if pause:
-                # Daz edit: commented this out because causes first .5 secs of video to be skipped, 
-                # and so far, commenting it out hasn't broken anything
-                # time.sleep(0.5)  # Wait for the DBus interface to be initialised. 
+                time.sleep(0.5)  # Wait for the DBus interface to be initialised. 
                 self.pause()
         except:
             # Make sure we do not leave any dangling process
@@ -541,6 +539,18 @@ class OMXPlayer(object):
         """
         return self._duration_us() / (1000.0 * 1000.0)
 
+    ############################ DAZ EDIT HERE ########################################
+    # Added Step function
+
+    @_check_player_is_active
+    @_from_dbus_type
+    def step(self):
+        """
+        Daz edit:
+        Sends custom step command to omxplayer. Will always return 1.
+        """
+        return self._player_interface_property('Step')
+    ############################ End of edit ########################################
 
     """ PLAYER INTERFACE METHODS """
 
