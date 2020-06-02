@@ -120,7 +120,8 @@ class OMXPlayer(object):
                  bus_address_finder=None,
                  Connection=None,
                  dbus_name=None,
-                 pause=False):
+                 pause=False,
+                 mute=False):
         logger.debug('Instantiating OMXPlayer')
 
         if args is None:
@@ -151,7 +152,7 @@ class OMXPlayer(object):
 
         self._process = None
         self._connection = None
-        self.load(source, pause=pause)
+        self.load(source, pause=pause, mute=mute)
 
         self.is_looping = False
 
@@ -240,7 +241,7 @@ class OMXPlayer(object):
     """ Utilities """
 
 
-    def load(self, source, pause=False):
+    def load(self, source, pause=False, mute=False):
         """
         Loads a new source (as a file) from ``source`` (a file path or URL)
         by killing the current ``omxplayer`` process and forking a new one.
@@ -251,8 +252,12 @@ class OMXPlayer(object):
         self._source = source
         try:
             self._load_source(source)
+            # Daz edit: made sleep mandatory for any load
+            time.sleep(0.5)  # Wait for the DBus interface to be initialised. 
+            self.step() # Step to show first frame
+            if mute:
+                self.mute()
             if pause:
-                time.sleep(0.5)  # Wait for the DBus interface to be initialised. 
                 self.pause()
         except:
             # Make sure we do not leave any dangling process
@@ -384,7 +389,7 @@ class OMXPlayer(object):
     def playback_status(self):
         """
         Returns:
-            str: one of ("Playing" | "Paused" | "Stopped")
+            str: one of ("Playing" | "Paused" | "Stopped" | "Done")
         """
         return self._player_interface_property('PlaybackStatus')
 
@@ -595,6 +600,8 @@ class OMXPlayer(object):
         """
         self._player_interface.Seek(Int64(1000.0 * 1000 * relative_position))
         self.seekEvent(self, relative_position)
+        # Daz edit: seeking to position won't update what is shown. A step here will force the output video to change.
+        self.step()  
 
     @_check_player_is_active
     @_from_dbus_type
@@ -607,6 +614,8 @@ class OMXPlayer(object):
         """
         self._player_interface.SetPosition(ObjectPath("/not/used"), Int64(position * 1000.0 * 1000))
         self.positionEvent(self, position)
+        # Daz edit: seeking to position won't update what is shown. A step here will force the output video to change.
+        self.step()  
 
     @_check_player_is_active
     @_from_dbus_type
