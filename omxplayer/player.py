@@ -120,8 +120,7 @@ class OMXPlayer(object):
                  bus_address_finder=None,
                  Connection=None,
                  dbus_name=None,
-                 pause=False,
-                 mute=False):
+                 pause=False):
         logger.debug('Instantiating OMXPlayer')
 
         if args is None:
@@ -152,7 +151,7 @@ class OMXPlayer(object):
 
         self._process = None
         self._connection = None
-        self.load(source, pause=pause, mute=mute)
+        self.load(source, pause=pause)
 
         self.is_looping = False
 
@@ -241,7 +240,7 @@ class OMXPlayer(object):
     """ Utilities """
 
 
-    def load(self, source, pause=False, mute=False):
+    def load(self, source, pause=False):
         """
         Loads a new source (as a file) from ``source`` (a file path or URL)
         by killing the current ``omxplayer`` process and forking a new one.
@@ -255,8 +254,6 @@ class OMXPlayer(object):
             # Daz edit: made sleep mandatory for any load
             time.sleep(0.5)  # Wait for the DBus interface to be initialised. 
             self.step() # Step to show first frame
-            if mute:
-                self.mute()
             if pause:
                 self.pause()
         except:
