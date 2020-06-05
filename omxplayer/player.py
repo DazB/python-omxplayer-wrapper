@@ -120,7 +120,8 @@ class OMXPlayer(object):
                  bus_address_finder=None,
                  Connection=None,
                  dbus_name=None,
-                 pause=False):
+                 pause=False,
+                 mute=False):
         logger.debug('Instantiating OMXPlayer')
 
         if args is None:
@@ -151,7 +152,7 @@ class OMXPlayer(object):
 
         self._process = None
         self._connection = None
-        self.load(source, pause=pause)
+        self.load(source, pause=pause, mute=mute)
 
         self.is_looping = False
 
@@ -240,7 +241,7 @@ class OMXPlayer(object):
     """ Utilities """
 
 
-    def load(self, source, pause=False):
+    def load(self, source, pause=False, mute=False):
         """
         Loads a new source (as a file) from ``source`` (a file path or URL)
         by killing the current ``omxplayer`` process and forking a new one.
@@ -251,9 +252,18 @@ class OMXPlayer(object):
         self._source = source
         try:
             self._load_source(source)
-            # Daz edit: made sleep mandatory for any load
-            time.sleep(0.5)  # Wait for the DBus interface to be initialised. 
-            self.step() # Step to show first frame
+            # Sleep mandatory for any load
+            time.sleep(2.0)  # Wait for the DBus interface to be initialised.
+            if mute:
+                self.mute()
+            # We have to do this for every load to "kick" the player into action 
+            # and for it to register a mute
+            self.step()
+            self.set_position(1)    #FIXME is this causing the occasional loss of audio stream?
+            self.step()
+            self.set_position(0)
+            self.step()
+
             if pause:
                 self.pause()
         except:
@@ -549,9 +559,9 @@ class OMXPlayer(object):
     def step(self):
         """
         Daz edit:
-        Sends custom step command to omxplayer. Will always return 1.
+        Sends custom step command to omxplayer
         """
-        return self._player_interface_property('Step')
+        return self._player_interface.Step()
     ############################ End of edit ########################################
 
     """ PLAYER INTERFACE METHODS """
@@ -597,8 +607,6 @@ class OMXPlayer(object):
         """
         self._player_interface.Seek(Int64(1000.0 * 1000 * relative_position))
         self.seekEvent(self, relative_position)
-        # Daz edit: seeking to position won't update what is shown. A step here will force the output video to change.
-        self.step()  
 
     @_check_player_is_active
     @_from_dbus_type
@@ -611,8 +619,6 @@ class OMXPlayer(object):
         """
         self._player_interface.SetPosition(ObjectPath("/not/used"), Int64(position * 1000.0 * 1000))
         self.positionEvent(self, position)
-        # Daz edit: seeking to position won't update what is shown. A step here will force the output video to change.
-        self.step()  
 
     @_check_player_is_active
     @_from_dbus_type
@@ -855,33 +861,23 @@ class OMXPlayer(object):
         """
         return self._player_interface.Previous()
 
-    ############################ DAZ EDIT HERE ########################################
+    ############################ DAZ EDIT ########################################
     @_check_player_is_active
     @_from_dbus_type
     def set_loop(self, set_loop):
         """
-        Daz edit:
         Sets the loop variable in omxplayer.
-        For some reason, 0 doesn't work with dbus.Double. That caused me a headache.
-
-        Returns:
-            boolean: loop current state
         """
-        NO_LOOP = 1
-        LOOP = 2
+        self._player_interface.SetLoop(dbus.types.Boolean(set_loop))
 
-        if (set_loop == False):
-            loop_double = NO_LOOP
-        else:
-            loop_double = LOOP
-        loop_status = self._player_interface_property('SetLoop', dbus.Double(loop_double))
-
-        if loop_status == NO_LOOP:
-            self.is_looping = False
-        else:
-            self.is_looping = True
-        return self.is_looping
-    ############################ END ########################################
+    @_check_player_is_active
+    @_from_dbus_type
+    def set_end_paused(self, set_end_paused):
+        """
+        Sets the end paused variable in omxplayer.
+        """
+        self._player_interface.SetEndPaused(dbus.types.Boolean(set_end_paused))
+    ############################ END EDIT ########################################
 
     @property
     def _root_interface(self):
@@ -916,7 +912,14 @@ class OMXPlayer(object):
             return
 
         logger.debug('Quitting OMXPlayer')
-        self._terminate_process(self._process)
+        # Daz edit: Sent a dbus quit command. I believe not doing this caused audio and video buffer to 
+        # eventually fill
+        try:
+            self._root_interface.Quit()
+        except ex as Exception:
+            logger.debug('Cannot quit player. Terminating: ' + str(ex))
+            self._terminate_process(self._process)
+
         self._process_monitor.join()
         self._process = None
 
