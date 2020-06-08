@@ -179,7 +179,7 @@ class OMXPlayer(object):
             source = str(source.resolve())
         except AttributeError:
             pass
-        command = ['../omxplayer/omxplayer'] + self.args + [source] # TODO Daz edit: USING CUSTOM OMX. REMOVE THIS!!!!!!!!!!!!!!!!!!
+        command = ['/home/pi/omxplayer/omxplayer'] + self.args + [source] # TODO Daz edit: USING CUSTOM OMX. REMOVE THIS!!!!!!!!!!!!!!!!!!
         if self._dbus_name:
             command += ['--dbus_name', self._dbus_name]
         logger.debug("Opening omxplayer with the command: %s" % command)
@@ -561,7 +561,9 @@ class OMXPlayer(object):
         Daz edit:
         Sends custom step command to omxplayer
         """
-        return self._player_interface.Step()
+        return_code = self._player_interface.Step()
+        time.sleep(0.1) # Daz edit: it seems that a slight delay is needed to let the omx perfom a step
+        return return_code
     ############################ End of edit ########################################
 
     """ PLAYER INTERFACE METHODS """
@@ -618,6 +620,7 @@ class OMXPlayer(object):
             position (float): The position in seconds.
         """
         self._player_interface.SetPosition(ObjectPath("/not/used"), Int64(position * 1000.0 * 1000))
+        time.sleep(0.1) # Daz edit: it seems that a slight delay is needed to let the omx perfom a seek
         self.positionEvent(self, position)
 
     @_check_player_is_active
