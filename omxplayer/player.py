@@ -259,9 +259,13 @@ class OMXPlayer(object):
             # We have to do this for every load to "kick" the player into action 
             # and for it to register a mute
             self.step()
+            time.sleep(0.1)
             self.set_position(1)    #FIXME is this causing the occasional loss of audio stream?
+            time.sleep(0.1)
             self.step()
+            time.sleep(0.1)
             self.set_position(0)
+            time.sleep(0.1)
             self.step()
 
             if pause:
@@ -561,9 +565,7 @@ class OMXPlayer(object):
         Daz edit:
         Sends custom step command to omxplayer
         """
-        return_code = self._player_interface.Step()
-        time.sleep(0.1) # Daz edit: it seems that a slight delay is needed to let the omx perfom a step
-        return return_code
+        self._player_interface.Step()
     ############################ End of edit ########################################
 
     """ PLAYER INTERFACE METHODS """
@@ -620,7 +622,6 @@ class OMXPlayer(object):
             position (float): The position in seconds.
         """
         self._player_interface.SetPosition(ObjectPath("/not/used"), Int64(position * 1000.0 * 1000))
-        time.sleep(0.1) # Daz edit: it seems that a slight delay is needed to let the omx perfom a seek
         self.positionEvent(self, position)
 
     @_check_player_is_active
