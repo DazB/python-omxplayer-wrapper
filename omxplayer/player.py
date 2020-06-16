@@ -120,8 +120,7 @@ class OMXPlayer(object):
                  bus_address_finder=None,
                  Connection=None,
                  dbus_name=None,
-                 pause=False,
-                 mute=False):
+                 pause=False):
         logger.debug('Instantiating OMXPlayer')
 
         if args is None:
@@ -152,7 +151,7 @@ class OMXPlayer(object):
 
         self._process = None
         self._connection = None
-        self.load(source, pause=pause, mute=mute)
+        self.load(source, pause=pause)
 
         self.is_looping = False
 
@@ -241,7 +240,7 @@ class OMXPlayer(object):
     """ Utilities """
 
 
-    def load(self, source, pause=False, mute=False):
+    def load(self, source, pause=False):
         """
         Loads a new source (as a file) from ``source`` (a file path or URL)
         by killing the current ``omxplayer`` process and forking a new one.
@@ -253,20 +252,7 @@ class OMXPlayer(object):
         try:
             self._load_source(source)
             # Sleep mandatory for any load
-            time.sleep(2.0)  # Wait for the DBus interface to be initialised.
-            if mute:
-                self.mute()
-            # We have to do this for every load to "kick" the player into action 
-            # and for it to register a mute
-            self.step()
-            time.sleep(0.1)
-            self.set_position(1)    #FIXME is this causing the occasional loss of audio stream?
-            time.sleep(0.1)
-            self.step()
-            time.sleep(0.1)
-            self.set_position(0)
-            time.sleep(0.1)
-            self.step()
+            time.sleep(0.5)  # Wait for the DBus interface to be initialised.
 
             if pause:
                 self.pause()
@@ -916,14 +902,7 @@ class OMXPlayer(object):
             return
 
         logger.debug('Quitting OMXPlayer')
-        # Daz edit: Sent a dbus quit command. I believe not doing this caused audio and video buffer to 
-        # eventually fill
-        try:
-            self._root_interface.Quit()
-        except ex as Exception:
-            logger.debug('Cannot quit player. Terminating: ' + str(ex))
-            self._terminate_process(self._process)
-
+        self._terminate_process(self._process)
         self._process_monitor.join()
         self._process = None
 
