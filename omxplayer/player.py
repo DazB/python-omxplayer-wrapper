@@ -386,9 +386,20 @@ class OMXPlayer(object):
     def playback_status(self):
         """
         Returns:
-            str: one of ("Playing" | "Paused" | "Stopped" | "Done")
+            str: one of ("Playing" | "Paused" | "Stopped")
         """
         return self._player_interface_property('PlaybackStatus')
+
+    ############################ DAZ EDIT HERE ########################################
+    @_check_player_is_active
+    @_from_dbus_type
+    def is_done(self):
+        """
+        Checks "done" property of omx. Returns true if true
+        Returns:
+            boolean: True if done. False otherwise
+        """
+        return self._player_interface_property('IsDone')
 
     @_check_player_is_active
     @_from_dbus_type
