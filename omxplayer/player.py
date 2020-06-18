@@ -215,8 +215,8 @@ class OMXPlayer(object):
     def _terminate_process(self, process):
         try:
             process_group_id = os.getpgid(process.pid)
-            os.killpg(process_group_id, signal.SIGTERM)
-            logger.debug('SIGTERM Sent to pid: %s' % process_group_id)
+            os.killpg(process_group_id, signal.SIGKILL)
+            logger.debug('SIGKILL Sent to pid: %s' % process_group_id)
         except OSError:
             logger.error('Could not find the process to kill')
 
